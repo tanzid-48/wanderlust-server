@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -27,11 +27,24 @@ async function run() {
     const db = client.db("wanderlust");
     const destinationsCollection = db.collection("destination");
 
-   // GET method route
+   // GET method route all data
     app.get('/destinations', async(req, res) =>{
       const result = await destinationsCollection.find().toArray();
     res.send( result,'GET request to the homepage');
-    })
+    });
+
+    // single data
+   app.get('/destinations/:id', async (req, res) => {
+    const { id } = req.params;
+    const result = await destinationsCollection.findOne({ _id:id});
+
+    if (!result) {
+        return res.status(404).send({ message: "Destination not found" });
+    }
+
+    res.send(result);
+});
+
 
 
     // POST method route
@@ -41,6 +54,7 @@ async function run() {
       const result = await destinationsCollection.insertOne(newDestinations);
       res.send(result);
     });
+
 
     await client.db("admin").command({ ping: 1 });
     console.log(
