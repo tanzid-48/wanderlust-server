@@ -1,8 +1,13 @@
 require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const express = require("express");
+const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 5000;
+
+// Adds headers: Access-Control-Allow-Origin: *
+app.use(cors());
+app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.xhm3y2q.mongodb.net/?appName=Cluster0`;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -15,16 +20,27 @@ const client = new MongoClient(uri, {
 });
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
+  
     await client.connect();
-    // Send a ping to confirm a successful connection
+
+    // Connect to the "wanderlust" database and access its "destination" collection
+    const db = client.db("wanderlust");
+    const destinationsCollection = db.collection("destination");
+
+    // POST method route
+    app.post("/destination", async(req, res) => {
+      const newDestinations = req.body;
+      console.log(newDestinations);
+      const result = await destinationsCollection.insertOne(newDestinations);
+      res.send(result);
+    });
+
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
   } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
