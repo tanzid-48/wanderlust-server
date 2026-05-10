@@ -45,6 +45,33 @@ async function run() {
     res.send(result);
 });
 
+    // Update  single data 
+   app.patch('/destinations/:id', async (req, res) => {
+    const { id } = req.params;
+    const updatedData = req.body;
+    const result = await destinationsCollection.updateOne(
+      { _id:id},
+      {$set:updatedData},
+    );
+    if (!result) {
+        return res.status(404).send({ message: "Destination not found" });
+    }
+
+    res.send(result);
+});
+
+ // single data
+   app.delete('/destinations/:id', async (req, res) => {
+    const { id } = req.params;
+    const result = await destinationsCollection.deleteOne({ _id:id});
+
+    if (!result) {
+        return res.status(404).send({ message: "Destination not found" });
+    }
+
+    res.send(result);
+});
+
 
 
     // POST method route
