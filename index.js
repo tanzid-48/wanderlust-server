@@ -27,6 +27,13 @@ async function run() {
     const db = client.db("wanderlust");
     const destinationsCollection = db.collection("destination");
 
+   // GET method route
+    app.get('/destinations', async(req, res) =>{
+      const result = await destinationsCollection.find().toArray();
+    res.send( result,'GET request to the homepage');
+    })
+
+
     // POST method route
     app.post("/destination", async(req, res) => {
       const newDestinations = req.body;
