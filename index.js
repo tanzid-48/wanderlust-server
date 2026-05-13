@@ -1,16 +1,23 @@
 require("dotenv").config();
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const cors = require("cors");
+const {
+  MongoClient,
+  ServerApiVersion,
+  ObjectId,
+} = require("mongodb");
+
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Adds headers: Access-Control-Allow-Origin: *
+// Middleware
 app.use(cors());
 app.use(express.json());
 
+// MongoDB URI
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.xhm3y2q.mongodb.net/?appName=Cluster0`;
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+
+// Mongo Client
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -18,117 +25,173 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
 async function run() {
   try {
-  
     await client.connect();
 
-    // Connect to the "wanderlust" database and access its "destination" collection
     const db = client.db("wanderlust");
     const destinationsCollection = db.collection("destination");
     const bookingCollection = db.collection("booking");
 
-   // GET method route all data
-    app.get('/destinations', async(req, res) =>{
-      const result = await destinationsCollection.find().toArray();
-    res.send( result,'GET request to the homepage');
+    console.log("MongoDB connected 🚀");
+
+    // ========================
+    // DESTINATIONS ROUTES
+    // ========================
+
+    // GET all destinations
+    app.get("/destinations", async (req, res) => {
+      try {
+        const result = await destinationsCollection.find().toArray();
+        res.json(result);
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
     });
 
-    // single data
-   app.get('/destinations/:id', async (req, res) => {
-    const { id } = req.params;
-    const result = await destinationsCollection.findOne({ _id:id});
+    // GET single destination
+    app.get("/destinations/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
 
-    if (!result) {
-        return res.status(404).send({ message: "Destination not found" });
-    }
-
-    res.send(result);
-});
-
-    // Update  single data 
-   app.patch('/destinations/:id', async (req, res) => {
-    const { id } = req.params;
-    const updatedData = req.body;
-    const result = await destinationsCollection.updateOne(
-      { _id:id},
-      {$set:updatedData},
-    );
-    if (!result) {
-        return res.status(404).send({ message: "Destination not found" });
-    }
-
-    res.send(result);
-});
-
- // single data
-   app.delete('/destinations/:id', async (req, res) => {
-    const { id } = req.params;
-    const result = await destinationsCollection.deleteOne({ _id:id});
-
-    if (!result) {
-        return res.status(404).send({ message: "Destination not found" });
-    }
-
-    res.send(result);
-});
-
- // POST method route for booking
-    app.post("/booking", async(req, res) => {
-      const newBooking = req.body;
-      console.log(newBooking);
-      const result = await bookingCollection.insertOne(newBooking);
-      res.send(result);
-    });
-
-    // GET method route all data
-    app.get('/booking/:userId', async(req, res) =>{
-      const {userId} = req.params
-      const result = await bookingCollection.find({userId:userId}).toArray();
-    res.send( result);
-    });
-
-   app.delete('/booking/:bookingId', async (req, res) => {
-    const { bookingId } = req.params;
-
-    const query = {
-        _id: new ObjectId(bookingId)
-    };
-
-    const result = await bookingCollection.deleteOne(query);
-
-    if (result.deletedCount === 0) {
-        return res.status(404).send({
-            message: "Booking not found"
+        const result = await destinationsCollection.findOne({
+          _id: new ObjectId(id),
         });
-    }
 
-    res.send(result);
-});
+        if (!result) {
+          return res
+            .status(404)
+            .json({ message: "Destination not found" });
+        }
 
-    // POST method route
-    app.post("/destination", async(req, res) => {
-      const newDestinations = req.body;
-      console.log(newDestinations);
-      const result = await destinationsCollection.insertOne(newDestinations);
-      res.send(result);
+        res.json(result);
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
     });
 
+    // POST destination
+    app.post("/destination", async (req, res) => {
+      try {
+        const result = await destinationsCollection.insertOne(req.body);
+        res.json(result);
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    });
 
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!",
-    );
+    // UPDATE destination
+    app.patch("/destinations/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        const result = await destinationsCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: req.body }
+        );
+
+        if (result.matchedCount === 0) {
+          return res
+            .status(404)
+            .json({ message: "Destination not found" });
+        }
+
+        res.json(result);
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    });
+
+    // DELETE destination
+    app.delete("/destinations/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        const result = await destinationsCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+
+        if (result.deletedCount === 0) {
+          return res
+            .status(404)
+            .json({ message: "Destination not found" });
+        }
+
+        res.json(result);
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    });
+
+    // ========================
+    // BOOKING ROUTES
+    // ========================
+
+    // CREATE booking
+    app.post("/booking", async (req, res) => {
+      try {
+        const result = await bookingCollection.insertOne(req.body);
+        res.json(result);
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    });
+
+    // GET user bookings
+    app.get("/booking/:userId", async (req, res) => {
+      try {
+        const userId = req.params.userId;
+
+        const result = await bookingCollection
+          .find({ userId })
+          .toArray();
+
+        res.json(result);
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    });
+
+    // DELETE booking
+    app.delete("/booking/:bookingId", async (req, res) => {
+      try {
+        const id = req.params.bookingId;
+
+        const result = await bookingCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+
+        if (result.deletedCount === 0) {
+          return res
+            .status(404)
+            .json({ message: "Booking not found" });
+        }
+
+        res.json({
+          message: "Booking deleted successfully",
+          result,
+        });
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    });
+
+    // ========================
+    // HEALTH CHECK
+    // ========================
+    app.get("/", (req, res) => {
+      res.send("🚀 Wanderlust Server is Running");
+    });
+
   } finally {
-    // await client.close();
+    // keep connection alive
   }
 }
+
 run().catch(console.dir);
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
-
+// Start server
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });
