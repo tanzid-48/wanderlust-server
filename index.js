@@ -26,6 +26,7 @@ async function run() {
     // Connect to the "wanderlust" database and access its "destination" collection
     const db = client.db("wanderlust");
     const destinationsCollection = db.collection("destination");
+    const bookingCollection = db.collection("booking");
 
    // GET method route all data
     app.get('/destinations', async(req, res) =>{
@@ -71,6 +72,15 @@ async function run() {
 
     res.send(result);
 });
+
+ // POST method route for booking
+    app.post("/booking", async(req, res) => {
+      const newBooking = req.body;
+      console.log(newBooking);
+      const result = await bookingCollection.insertOne(newBooking);
+      res.send(result);
+    });
+
 
 
 
