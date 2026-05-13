@@ -81,8 +81,12 @@ async function run() {
       res.send(result);
     });
 
-
-
+    // GET method route all data
+    app.get('/booking/:userId', async(req, res) =>{
+      const {userId} = req.params
+      const result = await bookingCollection.find({userId:userId}).toArray();
+    res.send( result);
+    });
 
     // POST method route
     app.post("/destination", async(req, res) => {
