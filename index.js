@@ -79,6 +79,12 @@ async function run() {
       }
     });
 
+    app.get('/featured',async(req,res)=>{
+      const result = await destinationsCollection.find().limit(4).toArray();
+      res.send(result);
+
+    })
+
     // GET single destination
     app.get("/destinations/:id",verifyToken, async (req, res) => {
       try {
@@ -111,7 +117,7 @@ async function run() {
     });
 
     // UPDATE destination
-    app.patch("/destinations/:id", async (req, res) => {
+    app.patch("/destinations/:id",verifyToken, async (req, res) => {
       try {
         const id = req.params.id;
 
