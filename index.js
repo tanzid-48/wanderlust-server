@@ -6,6 +6,7 @@ const {
   ServerApiVersion,
   ObjectId,
 } = require("mongodb");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -25,6 +26,36 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+// Middleware
+
+const JWKS = createRemoteJWKSet(
+      new URL('https://wanderlust-pvb4.vercel.app/api/auth/jwks')
+    );
+
+const verifyToken = async (req, res, next) => {
+  
+  const authHeader = req.headers.authorization;
+ if (!authHeader){
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const token =authHeader.split(" ")[1];
+
+if (!token){
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+   try {
+    const { payload } = await jwtVerify(token, JWKS)
+    console.log(payload);
+    next()
+    
+   } catch (error) {
+    return res.status(403).json({ message: "Invalid token" })
+   } 
+
+}
+
+
 
 async function run() {
   try {
@@ -49,13 +80,7 @@ async function run() {
     });
 
     // GET single destination
-    app.get("/destinations/:id",
-      //midileware
-      (req,res,next)=>{
-        const header = req.headers.authorization
-        console.log(header)
-        next()
-      },async (req, res) => {
+    app.get("/destinations/:id",verifyToken, async (req, res) => {
       try {
         const id = req.params.id;
 
