@@ -49,7 +49,13 @@ async function run() {
     });
 
     // GET single destination
-    app.get("/destinations/:id", async (req, res) => {
+    app.get("/destinations/:id",
+      //midileware
+      (req,res,next)=>{
+        const header = req.headers.authorization
+        console.log(header)
+        next()
+      },async (req, res) => {
       try {
         const id = req.params.id;
 
