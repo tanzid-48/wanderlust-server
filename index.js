@@ -154,7 +154,7 @@ async function run() {
     });
    
     // CREATE booking
-    app.post("/booking", async (req, res) => {
+    app.post("/booking", verifyToken, async (req, res) => {
       try {
         const result = await bookingCollection.insertOne(req.body);
         res.json(result);
@@ -164,7 +164,7 @@ async function run() {
     });
 
     // GET user bookings
-    app.get("/booking/:userId", async (req, res) => {
+    app.get("/booking/:userId",verifyToken, async (req, res) => {
       try {
         const userId = req.params.userId;
 
@@ -179,7 +179,7 @@ async function run() {
     });
 
     // DELETE booking
-    app.delete("/booking/:bookingId", async (req, res) => {
+    app.delete("/booking/:bookingId",verifyToken,async (req, res) => {
       try {
         const id = req.params.bookingId;
 
